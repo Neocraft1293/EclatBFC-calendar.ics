@@ -65,16 +65,29 @@ app.get("/calendar.ics", async (req, res) => {
     let day = calendar.listeJourCdt[i];
 
     for (let seance of day.listeSeances) {
-      if (seance.flagActif) {
-        icsCalendar += "BEGIN:VEVENT\n";
-        icsCalendar += `DTSTART:${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}Z\n`;
-        icsCalendar += `DTEND:${moment.utc(seance.hfin).format("YYYYMMDDTHHmmss")}Z\n`;
-        icsCalendar += `SUMMARY:${seance.matiere}\n`;
-        icsCalendar += `DESCRIPTION:${seance.id}\n`;
-        icsCalendar += `LOCATION:${seance.salle.split(" -")[0]}\n`; // Supprime tout ce qui se trouve après le "-"
-        icsCalendar += "END:VEVENT\n";
-      }
-    }
+        if (seance.flagActif) {
+          icsCalendar += "BEGIN:VEVENT\n";
+          icsCalendar += `DTSTART:${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}Z\n`;
+          icsCalendar += `DTEND:${moment.utc(seance.hfin).format("YYYYMMDDTHHmmss")}Z\n`;
+              // Check if aRendre array exists and is not empty
+            if (seance.aRendre && seance.aRendre.length > 0) {
+            icsCalendar += `SUMMARY:${seance.matiere} 💼\n`;
+            } else {
+            icsCalendar += `SUMMARY:${seance.matiere}\n`;
+            }
+          //icsCalendar += `SUMMARY:${seance.matiere}\n`;
+      
+          // Check if aRendre array exists and is not empty
+          if (seance.aRendre && seance.aRendre.length > 0) {
+            icsCalendar += `DESCRIPTION:${seance.aRendre[0]['titre']}\n`;
+          } else {
+            icsCalendar += `DESCRIPTION:Vous n'avez pas de travail à faire pour ce cours.\n`;
+          }
+      
+          icsCalendar += `LOCATION:${seance.salle.split(" -")[0]}\n`; // Supprime tout ce qui se trouve après le "-"
+          icsCalendar += "END:VEVENT\n";
+        }
+      }     
   }
 
   icsCalendar += "END:VCALENDAR\n";
