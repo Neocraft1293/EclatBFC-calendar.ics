@@ -1,19 +1,33 @@
-Ce code crée un serveur web qui exécute une application Express. Lorsqu'un client envoie une requête GET à l'URL "/calendar.ics", l'application exécute une fonction asynchrone (async (req, res) => {}).
+Utilisation
 
-Cette fonction récupère un token dans l'URL de la requête (req.query.token) et utilise ce token pour se connecter à un service nommé "eclat" en utilisant un objet eclatClient(). Si la connexion échoue, elle envoie un message au client disant "Impossible de se connecter à Eclat.".
+    Assurez-vous d'avoir installé les dépendances nécessaires en exécutant npm install.
+    Démarrez le serveur en exécutant node index.js.
+    Ouvrez votre navigateur et accédez à http://localhost/login pour accéder à la page de connexion.
+    Saisissez votre nom d'utilisateur et votre mot de passe, puis cliquez sur "Se connecter". Si la connexion réussit, vous recevrez un message avec un lien vers votre calendrier ICS.
+    Cliquez sur ce lien ou copiez-le dans votre navigateur pour accéder à votre calendrier au format ICS. Vous pouvez ajouter ce calendrier à un client de calendrier compatible, comme Google Calendar ou Microsoft Outlook.
 
-Si la connexion réussit, la fonction récupère un calendrier à partir du service eclat et crée une chaîne de caractères nommée icsCalendar en utilisant un format appelé iCalendar. Cette chaîne de caractères est une représentation du calendrier au format iCalendar.
+Configuration
 
-Enfin, la fonction envoie la chaîne icsCalendar au client en spécifiant que le type de contenu est "text/calendar" et en utilisant la méthode send() de l'objet res (response).
+Le serveur écoute par défaut sur le port 80. Si vous souhaitez utiliser un port différent, modifiez la ligne suivante dans le fichier index.js:
 
-L'application écoute également les connexions entrantes sur le port 80 (ou sur le port spécifié par la variable d'environnement PORT s'il est défini). Si un client se connecte à cette adresse et à ce port, l'application exécutera la fonction de gestion de requête correspondante.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-This code creates a web server that runs an Express application. When a client sends a GET request to the URL "/calendar.ics", the application executes an async function (async (req, res) => {}).
+app.listen(80, () => {
+  console.log("Server listening on port 80");
+});
 
-This function retrieves a token from the request URL (req.query.token) and uses this token to log in to a service called "eclat" using an eclatClient object. If the login fails, it sends a message to the client saying "Unable to connect to Eclat."
+Par exemple, pour écouter sur le port 8080, utilisez:
 
-If the login is successful, the function retrieves a calendar from the eclat service and creates a string called icsCalendar using a format called iCalendar. This string is a representation of the calendar in iCalendar format.
+app.listen(8080, () => {
+  console.log("Server listening on port 8080");
+});
 
-Finally, the function sends the icsCalendar string to the client, specifying that the content type is "text/calendar" and using the send() method of the res (response) object.
+L'adresse IP du serveur est définie par la variable ip dans le fichier index.js. Si vous souhaitez utiliser une adresse IP différente, modifiez cette variable.
+Dépendances
 
-The application also listens for incoming connections on port 80 (or on the port specified by the PORT environment variable if it is defined). If a client connects to this address and port, the application will execute the appropriate request-handling function.
+Ce serveur utilise les modules suivants:
+
+    Express.js - framework de serveur pour Node.js
+    moment.js - bibliothèque de traitement de dates et d'heures
+    body-parser - middleware de gestion de corps de formulaire pour Express.js
+    node-fetch@2.6.1 - A light-weight module that brings window.fetch to Node.js
+
+Assurez-vous d'avoir installé ces dépendances avant de démarrer le serveur.
