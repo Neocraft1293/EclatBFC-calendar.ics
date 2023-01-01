@@ -8,7 +8,7 @@ Enfin, la fonction envoie la chaîne icsCalendar au client en spécifiant que le
 
 L'application écoute également les connexions entrantes sur le port 80 (ou sur le port spécifié par la variable d'environnement PORT s'il est défini). Si un client se connecte à cette adresse et à ce port, l'application exécutera la fonction de gestion de requête correspondante.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Certainly, I can describe the code in English. This code creates a web server that runs an Express application. When a client sends a GET request to the URL "/calendar.ics", the application executes an async function (async (req, res) => {}).
+This code creates a web server that runs an Express application. When a client sends a GET request to the URL "/calendar.ics", the application executes an async function (async (req, res) => {}).
 
 This function retrieves a token from the request URL (req.query.token) and uses this token to log in to a service called "eclat" using an eclatClient object. If the login fails, it sends a message to the client saying "Unable to connect to Eclat."
 
