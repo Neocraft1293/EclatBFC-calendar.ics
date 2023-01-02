@@ -34,7 +34,7 @@ app.post("/login", async (req, res) => {
   
     if (loginSuccess) {
       const token = eclat.getToken();
-      res.send(`Votre token est ${token} vous pouvez avoir votre agenda sur ce lien : ${ip}/calendar.ics?token=${token}`);
+      res.send(`Votre token est ${token} vous pouvez avoir votre agenda sur ce lien : http://${ip}/calendar.ics?token=${token}`);
     } else {
       res.send("Nom d'utilisateur ou mot de passe incorrect.");
     }
@@ -51,6 +51,12 @@ app.get("/calendar.ics", async (req, res) => {
 
   const calendar = await eclat.getCalendar();
 
+  const userInfo = await eclat.getInfo();
+  const lastName = userInfo.nom;
+  console.log(`${lastName} a généré son agenda.`);
+  
+
+
   // Vérifie que calendar est défini et que calendar.listeJourCdt est un tableau
   if (!calendar || !Array.isArray(calendar.listeJourCdt)) {
     return res.send("Erreur lors de la récupération du calendrier.");
@@ -65,29 +71,29 @@ app.get("/calendar.ics", async (req, res) => {
     let day = calendar.listeJourCdt[i];
 
     for (let seance of day.listeSeances) {
-        if (seance.flagActif) {
-          icsCalendar += "BEGIN:VEVENT\n";
-          icsCalendar += `DTSTART:${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}Z\n`;
-          icsCalendar += `DTEND:${moment.utc(seance.hfin).format("YYYYMMDDTHHmmss")}Z\n`;
-              // Check if aRendre array exists and is not empty
-            if (seance.aRendre && seance.aRendre.length > 0) {
-            icsCalendar += `SUMMARY:${seance.matiere} 💼\n`;
-            } else {
-            icsCalendar += `SUMMARY:${seance.matiere}\n`;
-            }
-          //icsCalendar += `SUMMARY:${seance.matiere}\n`;
-      
-          // Check if aRendre array exists and is not empty
+      if (seance.flagActif) {
+        icsCalendar += "BEGIN:VEVENT\n";
+        icsCalendar += `DTSTART:${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}Z\n`;
+        icsCalendar += `DTEND:${moment.utc(seance.hfin).format("YYYYMMDDTHHmmss")}Z\n`;
+            // Check if aRendre array exists and is not empty
           if (seance.aRendre && seance.aRendre.length > 0) {
-            icsCalendar += `DESCRIPTION:${seance.aRendre[0]['titre']}\n`;
+          icsCalendar += `SUMMARY:${seance.matiere} 💼\n`;
           } else {
-            icsCalendar += `DESCRIPTION:Vous n'avez pas de travail à faire pour ce cours.\n`;
+          icsCalendar += `SUMMARY:${seance.matiere}\n`;
           }
-      
-          icsCalendar += `LOCATION:${seance.salle.split(" -")[0]}\n`; // Supprime tout ce qui se trouve après le "-"
-          icsCalendar += "END:VEVENT\n";
+        //icsCalendar += `SUMMARY:${seance.matiere}\n`;
+    
+        // Check if aRendre array exists and is not empty
+        if (seance.aRendre && seance.aRendre.length > 0) {
+          icsCalendar += `DESCRIPTION:${seance.aRendre[0]['titre']}\n`;
+        } else {
+          icsCalendar += `DESCRIPTION:Vous n'avez pas de travail à faire pour ce cours.\n`;
         }
-      }     
+    
+        icsCalendar += `LOCATION:${seance.salle.split(" -")[0]}\n`; // Supprime tout ce qui se trouve après le "-"
+        icsCalendar += "END:VEVENT\n";
+      }
+    }     
   }
 
   icsCalendar += "END:VCALENDAR\n";
@@ -95,6 +101,19 @@ app.get("/calendar.ics", async (req, res) => {
   res.set("Content-Type", "text/calendar");
   res.send(icsCalendar);
 });
+
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <body>
+        <h1>Mon script Eclat</h1>
+        <p>Ce script utilise l'API Eclat pour fournir un calendrier ics à l'utilisateur.</p>
+        <p>Pour se connecter et obtenir votre calendrier, <a href="/login">cliquez ici</a>.</p>
+      </body>
+    </html>
+  `);
+});
+
 
 app.listen(process.env.PORT || 80, () => console.log("Le serveur écoute sur le port " + (process.env.PORT || 80)));
 
