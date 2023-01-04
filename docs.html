@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Documentation du script d'agenda Eclat</title>
+  </head>
+  <body>
+    <h1>Documentation du script d'agenda Eclat</h1>
+    <p>Ce script est conçu pour permettre à un utilisateur de se connecter à son compte Eclat et de générer un calendrier ICS de ses cours et travaux à faire. Le calendrier peut être personnalisé en sélectionnant diverses options lors de la génération.</p>
+    
+    <h2>Utilisation</h2>
+    <p>Pour utiliser ce script, vous devez d'abord vous assurer que vous avez installé les dépendances suivantes:</p>
+    <ul>
+      <li><a href="https://www.npmjs.com/package/express">express</a></li>
+      <li><a href="https://www.npmjs.com/package/moment">moment</a></li>
+      <li><a href="https://www.npmjs.com/package/body-parser">body-parser</a></li>
+    </ul>
+    <p>Vous pouvez installer ces dépendances en utilisant la commande suivante:</p>
+    <pre>
+npm install express moment body-parser
+    </pre>
+    <p>Une fois que vous avez installé ces dépendances, vous pouvez exécuter le script en utilisant la commande suivante:</p>
+    <pre>
+node script.js
+    </pre>
+    <p>Le script démarrera un serveur web qui écoute sur l'adresse IP et le port spécifiés dans le fichier "script.js". Vous pouvez accéder au formulaire de connexion en accédant à l'adresse "http://IP:port/login" dans votre navigateur, où "IP" et "port" sont remplacés par les valeurs spécifiées dans le script.</p>
+    
+    <h2>Routes</h2>
+    <h3>/login</h3>
+    <p>Cette route affiche un formulaire de connexion qui accepte un nom d'utilisateur et un mot de passe. Lorsque le formulaire est soumis, les informations de connexion sont vérifiées et, si elles sont valides, un jeton d'authentification est généré et envoyé à l'utilisateur. Si les informations de connexion sont incorrectes, un message d'erreur est affiché.</p>
+    <h3>/calendar.ics</h3>
+    <p>Cette route accepte un jeton d'authentification et des options de personnalisation dans l'URL et renvoie un fichier ICS contenant le calendrier de l'utilisateur avec les options de personnalisation appliquées. Si le jeton d'authentification n'est pas valide ou si l'utilisateur n'est pas connecté, un message d'erreur est renvoyé.</p>
+        <h2>Fonctions</h2>
+        <h3>loginByCredentials(username, password)</h3>
+        <p>Cette fonction essaie de se connecter à Eclat avec les informations de connexion données. Elle renvoie un booléen indiquant si la connexion a réussi ou non.</p>
+        <h3>loginByToken(token)</h3>
+        <p>Cette fonction essaie de se connecter à Eclat avec un jeton d'authentification donné. Elle renvoie un booléen indiquant si la connexion a réussi ou non.</p>
+        <h3>getCalendar()</h3>
+        <p>Cette fonction récupère le calendrier de l'utilisateur connecté à partir d'Eclat. Elle renvoie un objet contenant les données du calendrier.</p>
+        <h3>getInfo()</h3>
+        <p>Cette fonction récupère les informations de l'utilisateur connecté à partir d'Eclat. Elle renvoie un objet contenant les informations de l'utilisateur.</p>
+        
+        <h2>Modules tiers</h2>
+        <h3>moment</h3>
+        <p>Le module <a href="https://www.npmjs.com/package/moment">moment</a> est utilisé pour formater et manipuler des dates et des heures. Il est utilisé dans le script pour ajouter la date de génération de l'agenda aux événements du calendrier, si l'option "date" est sélectionnée.</p>
+        <h3>body-parser</h3>
+        <p>Le module <a href="https://www.npmjs.com/package/body-parser">body-parser</a> est utilisé pour traiter les données de formulaire envoyées via la méthode HTTP POST. Il est utilisé dans le script pour récupérer les informations de connexion envoyées via le formulaire de connexion.</p>
+        
+        <h2>Options de personnalisation</h2>
+        <p>Lors de la génération de l'agenda, vous pouvez sélectionner les options suivantes pour personnaliser l'agenda généré:</p>
+        <ul>
+          <li>addSymbol: Ajoute "💼" aux matières qui ont des travaux à faire.</li>
+          <li>addWork: Ajoute les travaux à faire pour chaque matière dans la description de l'événement.</li>
+          <li>name: Ajoute votre nom dans la description de l'agenda.</li>
+          <li>date: Ajoute la date de génération de l'agenda aux événements du calendrier.</li>
+        </ul>
+        <p>Pour sélectionner une ou plusieurs options, ajoutez les noms des options dans l'URL de la route "calendar.ics" en les séparant par des virgules. Par exemple, pour sélectionner les options "addSymbol" et "name", utilisez "options=addSymbol,name" dans l'URL.</p>
+            <h2>Exemple d'utilisation</h2>
+            <p>Voici comment utiliser ce script pour générer un agenda personnalisé:</p>
+            <ol>
+              <li>Accédez à l'adresse "http://IP:port/login" dans votre navigateur, où "IP" et "port" sont remplacés par les valeurs spécifiées dans le script.</li>
+              <li>Entrez votre nom d'utilisateur et votre mot de passe dans le formulaire de connexion et cliquez sur "Se connecter".</li>
+              <li>Si la connexion a réussi, vous serez redirigé vers une page qui vous affiche votre token d'authentification et vous propose de sélectionner les options de personnalisation de votre agenda.</li>
+              <li>Sélectionnez les options de votre choix et cliquez sur "Générer l'agenda".</li>
+              <li>Pour accéder à votre agenda généré, utilisez l'adresse "http://IP:port/calendar.ics?token=TOKEN&options=OPTIONS", où "IP", "port" et "TOKEN" sont remplacés par les valeurs spécifiées dans le script, et "OPTIONS" est remplacé par une liste des options sélectionnées séparées par des virgules. Par exemple, pour sélectionner les options "addSymbol" et "name", vous devez utiliser "options=addSymbol,name".</li>
+            </ol>
+              </body>
+            </html>
+            
