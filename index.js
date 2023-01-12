@@ -67,7 +67,7 @@ app.post("/login", async (req, res) => {
 app.get("/calendar.ics", async (req, res) => {
   const token = req.query.token; // Récupère le token depuis l'URL
   const options = req.query.options; // Récupère les options depuis l'URL
-  console.log(options)
+  //console.log(options)
   const eclat = new eclatClient();
   const login = await eclat.loginByToken(token); // Connexion avec le token
 
@@ -142,7 +142,7 @@ app.get("/calendar.ics", async (req, res) => {
         }
         
         icsCalendar += `DESCRIPTION:${descriptiontxt}\n`;
-        console.log(descriptiontxt)
+        //console.log(descriptiontxt)
 
 
 
