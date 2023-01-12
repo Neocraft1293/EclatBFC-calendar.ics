@@ -214,6 +214,8 @@ app.get("/docs", (req, res) => {
 
  
 
+
+
 app.listen(process.env.PORT || 80, () => console.log("Le serveur écoute sur le port " + (process.env.PORT || 80)));
 
 
