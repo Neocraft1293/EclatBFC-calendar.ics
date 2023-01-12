@@ -5,6 +5,7 @@ const { eclatClient } = require("./api.js");
 const ip = "neocraft1293.fr" 
 const app = express();
 
+const optionsValides = require('./options.json').optionsValides;
 // Configure le middleware de gestion de corps de formulaire
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -36,32 +37,21 @@ app.post("/login", async (req, res) => {
     const token = eclat.getToken();
     res.send(`
       <p>Votre token est ${token}.</p>
-      <p>Veuillez sélectionner les options que vous souhaitez utiliser pour générer votre agenda :</p>
       <form method="post" action="/generate-calendar">
-        <input type="checkbox" id="addSymbol" name="options" value="addSymbol">
-        <label for="addSymbol">Ajouter "💼" a la matier quand un travail est a faire pour le cour</label><br>
-        <input type="checkbox" id="addWork" name="options" value="addWork">
-        <label for="addWork">Ajouter les travaile à faire pour chaque cours</label><br>
-        <input type="checkbox" id="name" name="options" value="name">
-        <label for="name">Ajouter votre nom dans la description de l'agenda</label><br>
-        <input type="checkbox" id="date" name="options" value="date">
-        <label for="date">Ajouter la date de génération de l'agenda</label><br>
+        <p>Veuillez sélectionner les options que vous souhaitez utiliser pour générer votre agenda :</p>
+        ${optionsValides.map(opt =>`
+          <input type="checkbox" id="${opt.value}" name="options" value="${opt.value}">
+          <label for="${opt.value}">${opt.description}</label><br>
+        `).join('')}
         <input type="hidden" name="token" value="${token}">
         <input type="submit" value="Générer l'agenda">
       </form>
-      <button id="copy-button" data-calendar-url="${token}">Copier le token</button>
-      <script>
-        const copyButton = document.getElementById("copy-button");
-        const token = copyButton.getAttribute("data-calendar-url");
-        copyButton.addEventListener("click", () => {
-          navigator.clipboard.writeText(token);
-        });
-      </script>
     `);
   } else {
     res.send("Nom d'utilisateur ou mot de passe incorrect.");
     }
   });
+
   
 
 app.get("/calendar.ics", async (req, res) => {
@@ -212,7 +202,46 @@ app.get("/docs", (req, res) => {
   res.sendFile(__dirname + "/docs.html");
 });
 
- 
+app.get("/test-token", (req, res) => {
+  res.send(`
+    <form method="post" action="/test-token">
+      <label for="token">Token:</label><br>
+      <input type="text" id="token" name="token"><br><br>
+      <input type="submit" value="Envoyer">
+    </form> 
+  `);
+});
+
+
+app.post("/test-token", async (req, res) => {
+  const token = req.body.token;
+  
+  // Check if token is provided
+  if (!token) {
+    return res.send("Veuillez fournir un token.");
+  }
+  
+  const eclat = new eclatClient();
+  const loginSuccess = await eclat.loginByToken(token);
+  if (loginSuccess) {
+    const userInfo = await eclat.getInfo();
+    const name = userInfo.nom;
+    let response = `<p>Bonjour ${name}! Votre token est valide.</p>`;
+    response += `
+    <form method="post" action="/generate-calendar">
+      <p>Veuillez sélectionner les options que vous souhaitez utiliser pour générer votre agenda :</p>
+    `;
+    optionsValides.map(opt => response += `
+      <input type="checkbox" id="${opt.value}" name="options" value="${opt.value}">
+      <label for="${opt.value}">${opt.description}</label><br>
+    `);
+    response += `<input type="hidden" name="token" value="${token}"> <input type="submit" value="Générer l'agenda"> </form>`;
+    res.send(response);
+  } else {
+    res.send("Token invalide. Veuillez vous connecter à nouveau pour obtenir un nouveau token." + `<a href="/login">Se connecter</a>`);
+  }
+});
+
 
 
 

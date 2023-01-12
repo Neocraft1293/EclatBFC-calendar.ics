@@ -1,0 +1,20 @@
+{
+    "optionsValides": [
+        {
+            "value": "addSymbol",
+            "description": "Ajouter un symbole à la matière quand un travail est à faire pour le cours"
+        },
+        {
+            "value": "addWork",
+            "description": "Ajouter les travaux à faire pour chaque cours"
+        },
+        {
+            "value": "name",
+            "description": "Ajouter votre nom dans la description de l'agenda"
+        },
+        {
+            "value": "date",
+            "description": "Ajouter la date de génération de l'agenda"
+        }
+    ]
+}
