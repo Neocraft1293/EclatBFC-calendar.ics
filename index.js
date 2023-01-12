@@ -3,6 +3,7 @@ const moment = require("moment");
 const bodyParser = require("body-parser");
 const { eclatClient } = require("./api.js");
 const ip = "neocraft1293.fr" 
+const port = 80
 const app = express();
 
 const optionsValides = require('./options.json').optionsValides;
@@ -161,6 +162,7 @@ app.get("/", (req, res) => {
         <h1>Mon script Eclat</h1>
         <p>Ce script utilise l'API Eclat pour fournir un calendrier ics à l'utilisateur.</p>
         <p>Pour se connecter et obtenir votre calendrier et votre token, <a href="/login">cliquez ici</a>.</p>
+        <p>Pour tester un token existant, <a href="/test-token">cliquez ici</a>.</p>
         <p>Pour accéder à la documentation du script, <a href="/docs">cliquez ici</a>.</p>
         <p>Pour accéder au dépôt GitHub de ce script, <a href="https://github.com/Neocraft1293/EclatBFC-calendar.ics">cliquez ici</a>.</p>
       </body>
@@ -180,7 +182,7 @@ app.post("/generate-calendar", (req, res) => {
   }
 
   // Create the calendar URL
-  const calendarUrl = `http://${ip}/calendar.ics?${queryString}`;
+  const calendarUrl = `http://${ip}:${port}/calendar.ics?${queryString}`;
 
   // Render the response page with the calendar URL and token
   res.send(`
@@ -245,6 +247,6 @@ app.post("/test-token", async (req, res) => {
 
 
 
-app.listen(process.env.PORT || 80, () => console.log("Le serveur écoute sur le port " + (process.env.PORT || 80)));
+app.listen(process.env.PORT || port, () => console.log("Le serveur écoute sur le port " + (process.env.PORT || port)));
 
 
