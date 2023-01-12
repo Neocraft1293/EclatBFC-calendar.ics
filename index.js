@@ -117,15 +117,15 @@ app.get("/calendar.ics", async (req, res) => {
 
         if (options && options.includes("addWork")) {
           if (seance.aRendre && seance.aRendre.length > 0) {
-            descriptiontxt += `travaile a faire:${seance.aRendre[0]['titre']}\n`;
+            descriptiontxt += `travaile a faire:${seance.aRendre[0]['titre']}\\n`;
           } else {
-            descriptiontxt += `Vous n'avez pas de travail à faire pour ce cours.\n`;
+            descriptiontxt += `Vous n'avez pas de travail à faire pour ce cours.\\n`;
           }
         }
         if (options && options.includes("name")) {
           const userInfo = await eclat.getInfo();
           const lastName = userInfo.nom;
-          descriptiontxt += `importer depuis le compte de :${lastName}\n`;
+          descriptiontxt += `importer depuis le compte de :${lastName}\\n`;
         }
         if (options && options.includes("date")) {
           const currentDate = new Date();
@@ -138,7 +138,7 @@ app.get("/calendar.ics", async (req, res) => {
             minute: "numeric",
             second: "numeric",
           });
-          descriptiontxt += `Agenda généré le ${dateString}.\n`;
+          descriptiontxt += `Agenda généré le ${dateString}.\\n`;
         }
         
         icsCalendar += `DESCRIPTION:${descriptiontxt}\n`;
