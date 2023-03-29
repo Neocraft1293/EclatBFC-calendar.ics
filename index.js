@@ -3,11 +3,12 @@ const moment = require("moment");
 const bodyParser = require("body-parser");
 const fetch = require('node-fetch');
 const { eclatClient } = require("./api.js");
-const https = require('https');
-const fs = require('fs');
-const ip = "neocraft1293.fr" 
-const port = 8000
+const ip = "localhost" 
+const port = 8080
 const app = express();
+let meteo = [];
+let meteodescription;
+let closestIndex;
 
 const optionsValides = require('./options.json').optionsValides;
 // Configure le middleware de gestion de corps de formulaire
@@ -62,7 +63,11 @@ app.get("/calendar.ics", async (req, res) => {
   const token = req.query.token; // Récupère le token depuis l'URL
   const options = req.query.options; // Récupère les options depuis l'URL
   const locate = req.query.locate; // Récupère la localitation depuis l'URL
-  //console.log(options)
+  if (locate) {
+      meteo = await getMeteo(locate);
+      console.log(meteo);
+  }
+  
   const eclat = new eclatClient();
   const login = await eclat.loginByToken(token); // Connexion avec le token
 
@@ -91,103 +96,44 @@ app.get("/calendar.ics", async (req, res) => {
 
     for (let seance of day.listeSeances) {
       if (seance.flagActif) {
+        let times = meteo.hourly.time;
+        const seanceDate = moment.utc(seance.hdeb).format("YYYYMMDDTHH");
+        closestIndex = 0;
+        let minDifference = Math.abs(moment(times[closestIndex]).diff(seanceDate));
+  
+        times.forEach((time, index) => {
+          const difference = Math.abs(moment(time).diff(seanceDate));
+          if (difference < minDifference) {
+            closestIndex = index;
+            minDifference = difference;
+          }
+        });
         icsCalendar += "BEGIN:VEVENT\n";
         icsCalendar += `DTSTART:${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}Z\n`;
         icsCalendar += `DTEND:${moment.utc(seance.hfin).format("YYYYMMDDTHHmmss")}Z\n`;
+        icsCalendar += `SUMMARY:${seance.matiere}`;
             // Check if aRendre array exists and is not empty
           if (seance.aRendre && seance.aRendre.length > 0) { 
-
-        if (options && options.includes("addSymbol")) {
-          icsCalendar += `SUMMARY:${seance.matiere} 💼`;
-        } else {
-        icsCalendar += `SUMMARY:${seance.matiere}`;
-        }
-        } else {
-          icsCalendar += `SUMMARY:${seance.matiere}`; 
-        }
-        if (locate) {
-          if (locate && options && options.includes("symbolmeteo")) {
-            const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${locate.split(",")[0]}&longitude=${locate.split(",")[1]}&date_time=${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}&hourly=temperature_2m,weathercode`;
-          
-            async function fetchData() {
-              try {
-                const response = await fetch(url);
-                const meteo = await response.json();
-          
-                let times = meteo.hourly.time;
-                const seanceDate = moment.utc(seance.hdeb).format("YYYYMMDDTHH");
-                let closestIndex = 0;
-                let minDifference = Math.abs(moment(times[closestIndex]).diff(seanceDate));
-          
-                times.forEach((time, index) => {
-                  const difference = Math.abs(moment(time).diff(seanceDate));
-                  if (difference < minDifference) {
-                    closestIndex = index;
-                    minDifference = difference;
-                  }
-                });
-          
-                const descriptionmeteo = getemotmeteo(meteo.hourly.weathercode[closestIndex]);
-                
-                const meteodescription = ` ${descriptionmeteo}`;
-          
-                return meteodescription;
-              } catch (error) {
-                console.error(error);
-                return null;
-              }
-            }
-          
-            const meteodescription = await fetchData();
-            if (meteodescription) {
-              icsCalendar += meteodescription;
-            }
-          }
-          if (locate && options && options.includes("symbolmeteo")) {
-            const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${locate.split(",")[0]}&longitude=${locate.split(",")[1]}&date_time=${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}&hourly=temperature_2m,weathercode`;
-          
-            async function fetchData() {
-              try {
-                const response = await fetch(url);
-                const meteo = await response.json();
-          
-                let times = meteo.hourly.time;
-                const seanceDate = moment.utc(seance.hdeb).format("YYYYMMDDTHH");
-                let closestIndex = 0;
-                let minDifference = Math.abs(moment(times[closestIndex]).diff(seanceDate));
-          
-                times.forEach((time, index) => {
-                  const difference = Math.abs(moment(time).diff(seanceDate));
-                  if (difference < minDifference) {
-                    closestIndex = index;
-                    minDifference = difference;
-                  }
-                });
-          
-                
-                const meteodescription = ` ${meteo.hourly.temperature_2m[closestIndex]}°`;
-          
-                return meteodescription;
-              } catch (error) {
-                console.error(error);
-                return null;
-              }
-            }
-          
-            const meteodescription = await fetchData();
-            if (meteodescription) {
-              icsCalendar += meteodescription;
-            }
-          }
-
-
-
-
-
-        }
+            
         
-        icsCalendar += `\n`;
+        if (options && options.includes("addSymbol")) {
+          icsCalendar += ` 💼 `;
+        } else {
+        icsCalendar += ``;
+        }
+        }
         //icsCalendar += `SUMMARY:${seance.matiere}\n`;
+        if(meteo) {
+          if (options && options.includes("symbolmeteo")) {
+            icsCalendar += getemotmeteo(meteo.hourly.weathercode[closestIndex]);
+          }
+        }
+        if(meteo) {
+          if (options && options.includes("tempmeteo")) {
+            icsCalendar += ` ${meteo.hourly.temperature_2m[closestIndex]}°`;
+          }
+        }
+        icsCalendar += `\n`;
     
         // Check if aRendre array exists and is not empty
         let descriptiontxt = "";
@@ -199,8 +145,31 @@ app.get("/calendar.ics", async (req, res) => {
             descriptiontxt += `Vous n'avez pas de travail à faire pour ce cours.\\n`;
           }
         }
+
+        if (meteo) {
+          if (options && options.includes("meteo")) {
+            console.log("dd");
+            try {
+              const descriptionmeteo = getDescription(meteo.hourly.weathercode[closestIndex]);
+              meteodescription = `Il devrait faire ${meteo.hourly.temperature_2m[closestIndex]}° avec un temps ${descriptionmeteo}\\n`;
+              
+            } catch (error) {
+              console.error(error);
+            }
+          }    
+        }
+        
+        /*const meteodescriptionFetch = await fetchData(); // Attendre la fin de l'exécution de fetchData()
+        if (meteodescriptionFetch) {
+          meteodescription = meteodescriptionFetch;
+        } */
+        
+        if (meteodescription) {
+          descriptiontxt += meteodescription;
+        }
+          console.log("dfd");
         if (options && options.includes("name")) {
-          const userInfo = eclat.getInfo();
+          const userInfo = await eclat.getInfo();
           const lastName = userInfo.nom;
           descriptiontxt += `importer depuis le compte de :${lastName}\\n`;
         }
@@ -215,58 +184,6 @@ app.get("/calendar.ics", async (req, res) => {
             minute: "numeric",
             second: "numeric",
           });
-          if (locate) {
-            if (options && options.includes("date")) {
-              const currentDate = new Date();
-              const dateString = currentDate.toLocaleString("fr-FR", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                second: "numeric",
-              });
-              if (locate) {
-                if (options && options.includes("meteo")) {
-                  const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${locate.split(",")[0]}&longitude=${locate.split(",")[1]}&date_time=${moment.utc(seance.hdeb).format("YYYYMMDDTHHmmss")}&hourly=temperature_2m,weathercode`;
-                  // Déplacer la fonction fetchData en dehors de la condition if
-                  async function fetchData() {
-                    try {
-                      const response = await fetch(url);
-                      const meteo = await response.json();
-                      
-                      let times = meteo.hourly.time;
-                      const seanceDate = moment.utc(seance.hdeb).format("YYYYMMDDTHH");
-                      let closestIndex = 0;
-                      let minDifference = Math.abs(moment(times[closestIndex]).diff(seanceDate));
-                
-                      times.forEach((time, index) => {
-                        const difference = Math.abs(moment(time).diff(seanceDate));
-                        if (difference < minDifference) {
-                          closestIndex = index;
-                          minDifference = difference;
-                        }
-                      });
-                
-                      const descriptionmeteo = getDescription(meteo.hourly.weathercode[closestIndex]);
-                      const meteodescription = `Il devrait faire ${meteo.hourly.temperature_2m[closestIndex]}° avec un temps ${descriptionmeteo}\n`;
-                      
-                      return meteodescription;
-                    } catch (error) {
-                      console.error(error);
-                    }
-                  }
-                
-                  const meteodescription = await fetchData(); // Attendre la fin de l'exécution de fetchData()
-                  if (meteodescription) {
-                    descriptiontxt += meteodescription;
-                  }
-                }    
-              }
-              descriptiontxt += `Agenda généré le ${dateString}.\\n`;
-            }            
-          }
           descriptiontxt += `Agenda généré le ${dateString}.\\n`;
         }
         
@@ -382,106 +299,119 @@ app.post("/test-token", async (req, res) => {
   }
 });
 
-
-
-
-app.listen(process.env.PORT || port, () => console.log("Le serveur écoute sur le port " + (process.env.PORT || port)));
-
-
 function getDescription(code) {
-  switch (code) {
+    switch (code) {
+      case 0:
+        return "Ciel clair";
+      case 1:
+      case 2:
+      case 3:
+        return "Plutôt dégagé, partiellement nuageux et couvert";
+      case 45:
+      case 48:
+        return "Brouillard et dépôt de brouillard givré";
+      case 51:
+      case 53:
+      case 55:
+        return "Bruine : Intensité légère, modérée et dense";
+      case 56:
+      case 57:
+        return "Bruine verglaçante : Intensité légère et dense";
+      case 61:
+      case 63:
+      case 65:
+        return "Pluie : Intensité faible, modérée et forte";
+      case 66:
+      case 67:
+        return "Pluie verglaçante : Intensité légère et forte";
+      case 71:
+      case 73:
+      case 75:
+        return "Chute de neige : Intensité légère, modérée et forte";
+      case 77:
+        return "Grains de neige";
+      case 80:
+      case 81:
+      case 82:
+        return "Averses de pluie : Légères, modérées et violentes";
+      case 85:
+      case 86:
+        return "Averses de neige légères et fortes";
+      case 95:
+        return "Orage : Léger ou modéré";
+      case 96:
+      case 99:
+        return "Orage avec grêle légère et forte";
+      default:
+        return "Code inconnu";
+    }
+  }
+  
+  function getemotmeteo(code) {
+    switch (code) {
     case 0:
-      return "Ciel clair";
+    return "☀️";
     case 1:
     case 2:
     case 3:
-      return "Plutôt dégagé, partiellement nuageux et couvert";
+    return "🌤️";
     case 45:
     case 48:
-      return "Brouillard et dépôt de brouillard givré";
+    return "🌁";
     case 51:
     case 53:
     case 55:
-      return "Bruine : Intensité légère, modérée et dense";
+    return "🌧️";
     case 56:
     case 57:
-      return "Bruine verglaçante : Intensité légère et dense";
+    return "🌨️";
     case 61:
     case 63:
     case 65:
-      return "Pluie : Intensité faible, modérée et forte";
+    return "🌧️";
     case 66:
     case 67:
-      return "Pluie verglaçante : Intensité légère et forte";
+    return "🌨️";
     case 71:
     case 73:
     case 75:
-      return "Chute de neige : Intensité légère, modérée et forte";
+    return "🌨️";
     case 77:
-      return "Grains de neige";
+    return "❄️";
     case 80:
     case 81:
     case 82:
-      return "Averses de pluie : Légères, modérées et violentes";
+    return "🌦️";
     case 85:
     case 86:
-      return "Averses de neige légères et fortes";
+    return "🌨️";
     case 95:
-      return "Orage : Léger ou modéré";
+    return "⛈️";
     case 96:
     case 99:
-      return "Orage avec grêle légère et forte";
+    return "🌩️";
     default:
-      return "Code inconnu";
-  }
-}
-
-function getemotmeteo(code) {
-  switch (code) {
-  case 0:
-  return "☀️";
-  case 1:
-  case 2:
-  case 3:
-  return "🌤️";
-  case 45:
-  case 48:
-  return "🌁";
-  case 51:
-  case 53:
-  case 55:
-  return "🌧️";
-  case 56:
-  case 57:
-  return "🌨️";
-  case 61:
-  case 63:
-  case 65:
-  return "🌧️";
-  case 66:
-  case 67:
-  return "🌨️";
-  case 71:
-  case 73:
-  case 75:
-  return "🌨️";
-  case 77:
-  return "❄️";
-  case 80:
-  case 81:
-  case 82:
-  return "🌦️";
-  case 85:
-  case 86:
-  return "🌨️";
-  case 95:
-  return "⛈️";
-  case 96:
-  case 99:
-  return "🌩️";
-  default:
-  return "❓";
-  }
-  }
+    return "❓";
+    }
+    }
+  
+  
+    async function getMeteo(locate) {
+        const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${locate.split(",")[0]}&longitude=${locate.split(",")[1]}&hourly=temperature_2m,weathercode&forecast_days=16 `;
+      
+        try {
+          const response = await fetch(url);
+          const meteo = await response.json();
+          return meteo;
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      
 
 
+      
+
+      
+
+app.listen(process.env.PORT || port, () => console.log("Le serveur écoute sur le port " + (process.env.PORT || port)));
